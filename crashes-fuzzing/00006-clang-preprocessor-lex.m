@@ -1,0 +1,1 @@
+@implementation c a(){for}@interface
