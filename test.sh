@@ -125,8 +125,8 @@ test_file() {
   files_to_compile=${path}
   test_name=$(basename ${path})
   test_name=${test_name//-/ }
-  test_name=${test_name//.c/}
   test_name=${test_name//.cpp/}
+  test_name=${test_name//.c/}
   test_name=${test_name//.m/}
   test_name="${test_name} (${language})"
   current_test_number=$(echo "${test_name}" | tr " " "\n" | egrep "^[0-9]+$" | head -1 | sed "s/^0*//g")
