@@ -1,10 +1,20 @@
 #!/bin/bash
 
+test_compiler_command() {
+  compiler_command="$1"
+  ${compiler_command} -o /dev/null -x c - <<< "int main() {}" 2> /dev/null
+  return $?
+}
+
 clang_command=clang
-clang_path=$(which ${clang_command})
+# Use "clang-dev" (a clang build with assertions enabled) if available.
+if test_compiler_command clang-dev; then
+  clang_command=clang-dev
+fi
+
 clang_version=$(${clang_command} --version | head -1)
 echo
-echo "Running tests against: ${clang_path} (${clang_version})"
+echo "Running tests against ${clang_command} (${clang_version})"
 echo "Usage: $0 [-v] [-q] [-c<columns>] [-l] [file ...]"
 
 columns=$(tput cols)
@@ -61,8 +71,8 @@ if [[ ${duplicate_bug_ids} != "" ]]; then
   echo
 fi
 
-${clang_command} -o /dev/null -x c - <<< "int main() {}" || {
-  show_error "Could not compile 'int main() {}' with clang. Cannot run tests. Check your LLVM/clang installation."
+test_compiler_command ${clang_command} || {
+  show_error "Could not compile 'int main() {}' with ${clang_command}. Cannot run tests. Check your LLVM/clang installation."
   exit 1
 }
 
@@ -183,7 +193,10 @@ run_tests_in_directory() {
   path=$2
   print_header "${header}"
   found_tests=0
-  for test_path in "${path}"/?????-*.*; do
+  for test_path in "${path}"/*.*; do
+    if [[ ${test_path} =~ README\.md ]]; then
+      continue
+    fi
     if [[ -h "${test_path}" ]]; then
       test_path=$(readlink "${test_path}" | cut -b4-)
     fi
