@@ -99,7 +99,7 @@ execute_with_timeout() {
 get_crash_hash() {
   compilation_output="$1"
   language="$2"
-  normalized_stack_trace=$(egrep "0x[0-9a-f]" <<< "${compilation_output}" | egrep 'clang::' | awk '{ $1=$2=$3=""; print $0 }' | sed 's/^ *//g' | head -10)
+  normalized_stack_trace=$(egrep "0x[0-9a-f]" <<< "${compilation_output}" | egrep 'clang::' | awk '{ $1=$2=$3=""; print $0 }' | sed 's/^ *//g' | head -5)
   if [[ ${normalized_stack_trace} == "" ]]; then
     crash_hash=""
   else
