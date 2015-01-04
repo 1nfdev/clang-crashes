@@ -1,0 +1,1 @@
+@implementation a@protocol p@implementation
