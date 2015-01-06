@@ -1,0 +1,1 @@
+typedef sruct __attribute__((<(
