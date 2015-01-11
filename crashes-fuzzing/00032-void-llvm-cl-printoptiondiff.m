@@ -1,0 +1,1 @@
+@interface a{protocl}struct{a

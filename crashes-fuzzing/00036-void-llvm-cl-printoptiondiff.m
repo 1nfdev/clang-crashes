@@ -1,0 +1,1 @@
+@interface a@property():({for()b:

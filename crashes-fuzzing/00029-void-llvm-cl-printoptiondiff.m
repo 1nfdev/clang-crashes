@@ -1,0 +1,1 @@
+c=@encode(struc{truct B
