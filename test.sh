@@ -137,6 +137,7 @@ test_file() {
   clang_crash=0
   compilation_comment=""
   output=$(${clang_command} -O3 -o /dev/null ${files_to_compile} 2>&1 | strings)
+  assertion=$(egrep "^Assertion" <<< "${output}")
   if [[ ${output} =~ failed\ due\ to\ signal ]]; then
     clang_crash=1
   fi
@@ -178,8 +179,10 @@ test_file() {
     echo "${output}"
     echo
   fi
+  # if [[ ${assertion} != "" ]]; then
+  #   echo "     Assertion: ${assertion}"
+  # fi
 }
-
 
 print_header() {
   header=$1
