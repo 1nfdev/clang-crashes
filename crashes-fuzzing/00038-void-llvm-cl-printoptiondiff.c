@@ -1,0 +1,1 @@
+strct __declspec(__has_include

@@ -1,0 +1,1 @@
+-(struct{:(void)0}
