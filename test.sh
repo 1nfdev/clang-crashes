@@ -229,7 +229,7 @@ main() {
     if [[ ${delete_dupes} == 1 ]]; then
       exit 0
     fi
-    run_tests_in_directory "Crashes marked as fixed in previous releases" "./fixed"
+    run_tests_in_directory "Crashes marked as fixed" "./fixed"
   else
     for test_path in ${argument_files}; do
       if [[ -f ${test_path} ]]; then
