@@ -1,0 +1,1 @@
+g@protocol a];@interface
