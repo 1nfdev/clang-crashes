@@ -136,11 +136,14 @@ test_file() {
   num_tests=$((num_tests + 1))
   clang_crash=0
   compilation_comment=""
-  output=$(${clang_command} -O3 -o /dev/null ${files_to_compile} 2>&1 | strings)
-  assertion=$(egrep "^Assertion" <<< "${output}")
-  if [[ ${output} =~ failed\ due\ to\ signal ]]; then
-    clang_crash=1
-  fi
+  for _ in {1..10}; do
+      output=$(${clang_command} -O3 -o /dev/null ${files_to_compile} 2>&1 | strings)
+      assertion=$(egrep "^Assertion" <<< "${output}")
+      if [[ ${output} =~ failed\ due\ to\ signal ]]; then
+          clang_crash=1
+          break
+      fi
+  done
   is_dupe=0
   hash=$(get_crash_hash "${output}" "${language}")
   if [[ ${hash} == "" ]]; then
