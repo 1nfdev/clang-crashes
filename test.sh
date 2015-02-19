@@ -136,7 +136,7 @@ test_file() {
   num_tests=$((num_tests + 1))
   clang_crash=0
   compilation_comment=""
-  for _ in {1..10}; do
+  for _ in {1..20}; do
       output=$(${clang_command} -O3 -o /dev/null ${files_to_compile} 2>&1 | strings)
       assertion=$(egrep "^Assertion" <<< "${output}")
       if [[ ${output} =~ failed\ due\ to\ signal ]]; then
