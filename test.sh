@@ -11,6 +11,7 @@ clang_command=clang
 if test_compiler_command clang-dev; then
   clang_command=clang-dev
 fi
+clang_binary_with_assertions_disabled="clang"
 
 clang_version=$(${clang_command} --version | head -1)
 echo
@@ -140,7 +141,15 @@ test_file() {
       output=$(${clang_command} -O3 -o /dev/null ${files_to_compile} 2>&1 | strings)
       assertion=$(egrep "^Assertion" <<< "${output}")
       if [[ ${output} =~ failed\ due\ to\ signal ]]; then
-          clang_crash=1
+          # Verify that the crash case crashes also non-assertions enabled clang binary (assumed to be named "clang").
+          if [[ ${clang_command} != ${clang_binary_with_assertions_disabled} ]]; then
+              output_without_assertions=$(${clang_binary_with_assertions_disabled} -O3 -o /dev/null ${files_to_compile} 2>&1 | strings)
+              if [[ ${output_without_assertions} =~ failed\ due\ to\ signal ]]; then
+                  clang_crash=1
+              fi
+          else
+              clang_crash=1
+          fi
           break
       fi
   done
