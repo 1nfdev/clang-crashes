@@ -61,6 +61,15 @@ color_green="\e[32m"
 color_bold="\e[1m"
 color_normal_display="\e[0m"
 
+execute_with_timeout() {
+  timeout_in_seconds=$1
+  command=$2
+  out=$(expect -c "set echo \"-noecho\"; set timeout ${timeout_in_seconds}; spawn -noecho /bin/sh -c \"${command}\"; expect timeout { exit 1 } eof { exit 0 }" 2>&1)
+  return_code=$?
+  echo "${out}" | tr -d "\r"
+  return ${return_code}
+}
+
 show_error() {
   warning="$1"
   printf "%b" "${color_red}[Error]${color_normal_display} ${color_bold}${warning}${color_normal_display}\n"
@@ -85,15 +94,6 @@ fi
 num_tests=0
 num_crashed=0
 seen_crash_hashes=""
-
-execute_with_timeout() {
-  timeout_in_seconds=$1
-  command=$2
-  out=$(expect -c "set echo \"-noecho\"; set timeout ${timeout_in_seconds}; spawn -noecho /bin/sh -c \"${command}\"; expect timeout { exit 1 } eof { exit 0 }" 2>&1)
-  return_code=$?
-  echo "${out}" | tr -d "\r"
-  return ${return_code}
-}
 
 # Definition of crash uniqueness (improvements welcome!) …
 # A crash is treated as non-duplicate if it has an unique "crash hash" as computed by the following crash hash function:
@@ -137,22 +137,34 @@ test_file() {
   num_tests=$((num_tests + 1))
   clang_crash=0
   compilation_comment=""
-  for _ in {1..20}; do
+  output=$(execute_with_timeout 5 "${clang_command} -O3 -o /dev/null ${files_to_compile}")
+  if [[ $? == 1 ]]; then
+    clang_crash=1
+    compilation_comment="timeout"
+  fi
+  output=$(execute_with_timeout 5 "${clang_binary_with_assertions_disabled} -O3 -o /dev/null ${files_to_compile}")
+  if [[ $? == 1 ]]; then
+    clang_crash=1
+    compilation_comment="timeout"
+  fi
+  if [[ ${clang_crash} == 0 ]]; then
+    for _ in {1..20}; do
       output=$(${clang_command} -O3 -o /dev/null ${files_to_compile} 2>&1 | strings)
       assertion=$(egrep "^Assertion" <<< "${output}")
       if [[ ${output} =~ failed\ due\ to\ signal ]]; then
-          # Verify that the crash case crashes also non-assertions enabled clang binary (assumed to be named "clang").
-          if [[ ${clang_command} != ${clang_binary_with_assertions_disabled} ]]; then
-              output_without_assertions=$(${clang_binary_with_assertions_disabled} -O3 -o /dev/null ${files_to_compile} 2>&1 | strings)
-              if [[ ${output_without_assertions} =~ failed\ due\ to\ signal ]]; then
-                  clang_crash=1
-              fi
-          else
-              clang_crash=1
+        # Verify that the crash case crashes also non-assertions enabled clang binary (assumed to be named "clang").
+        if [[ ${clang_command} != ${clang_binary_with_assertions_disabled} ]]; then
+          output_without_assertions=$(${clang_binary_with_assertions_disabled} -O3 -o /dev/null ${files_to_compile} 2>&1 | strings)
+          if [[ ${output_without_assertions} =~ failed\ due\ to\ signal ]]; then
+            clang_crash=1
           fi
-          break
+        else
+          clang_crash=1
+        fi
+        break
       fi
-  done
+    done
+  fi
   is_dupe=0
   hash=$(get_crash_hash "${output}" "${language}")
   if [[ ${hash} == "" ]]; then
