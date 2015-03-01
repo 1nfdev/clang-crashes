@@ -6,16 +6,16 @@ test_compiler_command() {
   return $?
 }
 
-clang_command=clang
-# Use "clang-dev" (a clang build with assertions enabled) if available.
+clang_binary_from_debug_build="clang"
+clang_binary_from_release_build="clang"
+# Use "clang-dev" (a clang debug build) if available.
 if test_compiler_command clang-dev; then
-  clang_command=clang-dev
+  clang_binary_from_debug_build="clang-dev"
 fi
-clang_binary_with_assertions_disabled="clang"
 
-clang_version=$(${clang_command} --version | head -1)
+clang_version=$(${clang_binary_from_debug_build} --version | head -1)
 echo
-echo "Running tests against ${clang_command} (${clang_version})"
+echo "Running tests against ${clang_binary_from_debug_build} (${clang_version})"
 echo "Usage: $0 [-v] [-q] [-c<columns>] [-l] [file ...]"
 
 columns=$(tput cols)
@@ -81,8 +81,8 @@ if [[ ${duplicate_bug_ids} != "" ]]; then
   echo
 fi
 
-test_compiler_command ${clang_command} || {
-  show_error "Could not compile 'int main() {}' with ${clang_command}. Cannot run tests. Check your LLVM/clang installation."
+test_compiler_command ${clang_binary_from_debug_build} || {
+  show_error "Could not compile 'int main() {}' with ${clang_binary_from_debug_build}. Cannot run tests. Check your LLVM/clang installation."
   exit 1
 }
 
@@ -137,24 +137,24 @@ test_file() {
   num_tests=$((num_tests + 1))
   clang_crash=0
   compilation_comment=""
-  output=$(execute_with_timeout 5 "${clang_command} -O3 -o /dev/null ${files_to_compile}")
+  output=$(execute_with_timeout 5 "${clang_binary_from_debug_build} -O3 -o /dev/null ${files_to_compile}")
   if [[ $? == 1 ]]; then
     clang_crash=1
     compilation_comment="timeout"
   fi
-  output=$(execute_with_timeout 5 "${clang_binary_with_assertions_disabled} -O3 -o /dev/null ${files_to_compile}")
+  output=$(execute_with_timeout 5 "${clang_binary_from_release_build} -O3 -o /dev/null ${files_to_compile}")
   if [[ $? == 1 ]]; then
     clang_crash=1
     compilation_comment="timeout"
   fi
   if [[ ${clang_crash} == 0 ]]; then
     for _ in {1..50}; do
-      output=$(${clang_command} -O3 -o /dev/null ${files_to_compile} 2>&1 | strings)
+      output=$(${clang_binary_from_debug_build} -O3 -o /dev/null ${files_to_compile} 2>&1 | strings)
       assertion=$(egrep "^Assertion" <<< "${output}")
       if [[ ${output} =~ failed\ due\ to\ signal ]]; then
         # Verify that the crash case crashes also non-assertions enabled clang binary (assumed to be named "clang").
-        if [[ ${clang_command} != ${clang_binary_with_assertions_disabled} ]]; then
-          output_without_assertions=$(${clang_binary_with_assertions_disabled} -O3 -o /dev/null ${files_to_compile} 2>&1 | strings)
+        if [[ ${clang_binary_from_debug_build} != ${clang_binary_from_release_build} ]]; then
+          output_without_assertions=$(${clang_binary_from_release_build} -O3 -o /dev/null ${files_to_compile} 2>&1 | strings)
           if [[ ${output_without_assertions} =~ failed\ due\ to\ signal ]]; then
             clang_crash=1
           fi
