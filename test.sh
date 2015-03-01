@@ -148,7 +148,7 @@ test_file() {
     compilation_comment="timeout"
   fi
   if [[ ${clang_crash} == 0 ]]; then
-    for _ in {1..20}; do
+    for _ in {1..50}; do
       output=$(${clang_command} -O3 -o /dev/null ${files_to_compile} 2>&1 | strings)
       assertion=$(egrep "^Assertion" <<< "${output}")
       if [[ ${output} =~ failed\ due\ to\ signal ]]; then
