@@ -3,7 +3,7 @@ clang-crashes
 
 This repo collects known test cases crashing clang – the "LLVM native" C/C++/Objective-C compiler.
 
-A test case is valid for inclusion in this project if it crashes the current SVN trunk version of clang compiled with the configure flags "--enable-optimized --disable-assertions".
+A test case is valid for inclusion in this project if it crashes the current SVN trunk version of clang compiled with the configure flags `--enable-optimized --disable-assertions`.
 
 Getting started
 ===============
